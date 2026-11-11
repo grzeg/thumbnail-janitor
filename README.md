@@ -12,6 +12,8 @@ Zbudowane z Claude Code. Tak, serio używam go do porządków w rodzinnych zdję
 ## Użycie
 
 ```bash
+# wymaga Pythona 3.10+ (macOS ma domyslnie 3.9, uzyj: brew install python@3.12)
+python3.12 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 python -m photopurge                 # dry-run: tylko lista, nic nie kasuje
@@ -19,7 +21,8 @@ python -m photopurge --delete        # usuwa po potwierdzeniu ("tak")
 python -m photopurge --max-kb 50 --include-videos
 ```
 
-- Usunięte trafiają do **„Ostatnio usunięte"** (30 dni na ratunek).
+- Gdy `photoscript` ma `delete()`, zdjęcia trafiają do **„Ostatnio usunięte"** (30 dni na ratunek). Gdy nie ma, trafiają do albumu `DO USUNIECIA`, który kasujesz ręcznie jednym ruchem (Cmd+A, Cmd+Delete).
+- Terminal potrzebuje **Pełnego dostępu do dysku** (Ustawienia → Prywatność i ochrona), inaczej `osxphotos` nie znajdzie bazy.
 - Przy iCloud Photos usunięcie zniknie też z innych urządzeń.
 - Przy pierwszym uruchomieniu macOS zapyta o zgodę na sterowanie Photos (AppleScript).
 - Domyślnie dry-run. Przejrzyj listę, zanim dasz `--delete`.

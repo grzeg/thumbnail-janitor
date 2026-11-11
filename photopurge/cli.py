@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from .core import find_small_photos, delete_photos
+from .core import ALBUM_NAME, find_small_photos, delete_photos
 
 
 def main(argv=None) -> int:
@@ -29,10 +29,14 @@ def main(argv=None) -> int:
         print("Przerwano.")
         return 1
 
-    done, failed = delete_photos(c.uuid for c in found)
+    done, failed, method = delete_photos(c.uuid for c in found)
     for u, err in failed.items():
         print(f"  blad {u}: {err}")
-    print(f"Gotowe. Usunieto: {len(done)}, bledy: {len(failed)}. Zobacz 'Ostatnio usuniete'.")
+    if method == "deleted":
+        print(f"Gotowe. Usunieto: {len(done)}, bledy: {len(failed)}. Zobacz 'Ostatnio usuniete'.")
+    else:
+        print(f"Wrzucono do albumu '{ALBUM_NAME}': {len(done)}, bledy: {len(failed)}.")
+        print("W Photos otworz ten album, Cmd+A, potem Cmd+Delete i potwierdz.")
     return 0 if not failed else 2
 
 

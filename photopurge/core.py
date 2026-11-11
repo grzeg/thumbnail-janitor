@@ -52,25 +52,52 @@ def find_small_photos(
     return out
 
 
+ALBUM_NAME = "DO USUNIECIA"
+
+
 def delete_photos(
     uuids: Iterable[str],
     on_progress: Optional[Callable[[int, int, str], None]] = None,
-) -> tuple[list[str], dict[str, str]]:
-    """Usun po UUID (trafia do 'Ostatnio usuniete').
+) -> tuple[list[str], dict[str, str], str]:
+    """Usun zdjecia po UUID.
 
-    Zwraca (usuniete_uuid, {uuid: blad}). UI moze podac on_progress(i, total, uuid).
+    Zwraca (zrobione_uuid, {uuid: blad}, metoda).
+    metoda = "deleted": photoscript ma delete(), zdjecia w 'Ostatnio usuniete'.
+    metoda = "album":   brak delete(); zdjecia wrzucone do albumu ALBUM_NAME,
+                        trzeba je skasowac recznie (Cmd+A, Cmd+Delete w albumie).
     """
     import photoscript  # import tu: core da sie testowac bez macOS
 
     ids = list(uuids)
+    lib = photoscript.PhotosLibrary()
     done: list[str] = []
     failed: dict[str, str] = {}
+
+    if hasattr(lib, "delete"):
+        method = "deleted"
+        for i, u in enumerate(ids, 1):
+            try:
+                lib.delete([photoscript.Photo(u)])
+                done.append(u)
+            except Exception as e:  # noqa: BLE001
+                failed[u] = str(e)
+            if on_progress:
+                on_progress(i, len(ids), u)
+        return done, failed, method
+
+    method = "album"
+    try:
+        album = lib.album(ALBUM_NAME)
+    except Exception:  # noqa: BLE001
+        album = None
+    if album is None:
+        album = lib.create_album(ALBUM_NAME)
     for i, u in enumerate(ids, 1):
         try:
-            photoscript.Photo(u).delete()
+            album.add([photoscript.Photo(u)])
             done.append(u)
         except Exception as e:  # noqa: BLE001
             failed[u] = str(e)
         if on_progress:
             on_progress(i, len(ids), u)
-    return done, failed
+    return done, failed, method
