@@ -1,6 +1,7 @@
 """Logika bez print() i input(). CLI i przyszle UI wołają tylko to."""
 from __future__ import annotations
 
+import glob
 import os
 from dataclasses import dataclass, asdict
 from typing import Callable, Iterable, Optional
@@ -28,13 +29,29 @@ def _size(p: osxphotos.PhotoInfo) -> Optional[int]:
     return None
 
 
+def _open_db(library: Optional[str]) -> osxphotos.PhotosDB:
+    """Otworz baze: podana sciezka, domyslna systemowa, albo ~/Pictures/*.photoslibrary."""
+    if library:
+        return osxphotos.PhotosDB(dbfile=library)
+    try:
+        return osxphotos.PhotosDB()
+    except FileNotFoundError:
+        found = sorted(glob.glob(os.path.expanduser("~/Pictures/*.photoslibrary")))
+        if found:
+            return osxphotos.PhotosDB(dbfile=found[0])
+        raise FileNotFoundError(
+            "Nie znaleziono Photos Library. Podaj --library SCIEZKA oraz nadaj "
+            "terminalowi Pelny dostep do dysku (Ustawienia -> Prywatnosc i ochrona)."
+        ) from None
+
+
 def find_small_photos(
     max_bytes: int = 100_000,
     include_videos: bool = False,
     library: Optional[str] = None,
 ) -> list[Candidate]:
     """Zwroc zdjecia mniejsze niz max_bytes, od najmniejszych."""
-    db = osxphotos.PhotosDB(dbfile=library) if library else osxphotos.PhotosDB()
+    db = _open_db(library)
     out: list[Candidate] = []
     for p in db.photos(movies=include_videos):
         size = _size(p)
